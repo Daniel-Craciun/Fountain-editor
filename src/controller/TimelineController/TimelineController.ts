@@ -1,57 +1,94 @@
-import { Timeline, TimelineRow } from "animation-timeline-js"
+import { Timeline, TimelineKeyframe, TimelineModel, TimelineRow } from "animation-timeline-js"
+import { listenToCustomEvent } from "../events";
+
+interface ExtTimelineKeyframe<T> extends TimelineKeyframe {
+    frameValue?: T;
+}
+
+interface ExtTimelineRow<T> extends TimelineRow {
+    keyframes?: Array<ExtTimelineKeyframe<T>>;
+    title?: string;
+}
+
+interface ExtTimelineModel<T> extends TimelineModel {
+    rows: Array<ExtTimelineRow<T>>;
+}
 
 export default class TimelineController {
     private timeline: Timeline;
 
+    private showPlayer: NodeJS.Timeout | null;
+
     constructor(timeline: Timeline) {
+        this.showPlayer = null;
+
+        /* timeline setup */
         this.timeline = timeline;
-        this.timeline.setOptions({ snapStep: 100 });
-        this.timeline.setModel({ rows: [] });
+        this.timeline.setOptions({ snapStep: 50 });
+        this.timeline._formatUnitsText = (val) => val + "ms";
+
+        const model: ExtTimelineModel<number> = {
+            rows: [{
+                title: "Track 1",
+                keyframes: [
+                    {
+                        val: 1000,
+                        frameValue: 12
+                    },
+                    {
+                        val: 0,
+                        frameValue: 100
+                    }
+                ]
+            }]
+        }
+
+        this.timeline.setModel(model);
         this.timeline.setTime(0);
+
+        /* event setup */
+        this.initEvents();
     }
 
-    public generateHTMLOutlineListNodes(rows: Array<TimelineRow>) {
-        const outlineContainer = document.getElementById('outline-container');
-        const options = this.timeline.getOptions();
-        const headerElement = document.getElementById('outline-header');
+    private initEvents() {
+        listenToCustomEvent("playShow", () => this.playShow())
+        listenToCustomEvent("pauseShow", () => this.pauseShow())
+    }
 
-        if (!headerElement) {
-            return;
-        }
 
-        headerElement.style.maxHeight = headerElement.style.minHeight = options.headerHeight + 'px';
+    /* show events */
+    private playShow() {
+        const timeStep = this.timeline.getOptions().snapStep ?? 100;
+        let time = this.timeline.getTime();
         
-        if (!outlineContainer) {
-            console.log("Error: Cannot find html element to output outline/tree view")
-            return;
+        this.timeline.setOptions({ timelineDraggable: false });
+
+        this.showPlayer = setInterval(() => {
+            time += timeStep;
+            this.timeline.setTime(time);
+            this.alignTimelineInView(time);
+        }, timeStep);
+    }
+    
+    private pauseShow() {
+        if (this.showPlayer) {
+            clearInterval(this.showPlayer);
+            this.showPlayer = null;
         }
+        
+        this.timeline.setOptions({ timelineDraggable: true });
+    }
 
-        outlineContainer.innerHTML = '';
 
-        rows.forEach(function (row, index) {
-            const div = document.createElement('div');
-            div.classList.add('outline-node');
+    /* timeline display */
+    private alignTimelineInView(time: number) {
+        const fromPx = this.timeline.scrollLeft;
+        const toPx = this.timeline.scrollLeft + this.timeline.getClientWidth();
 
-            const h = (row.style ? row.style.height : 0) || (options.rowsStyle ? options.rowsStyle.height : 0);
-
-            div.style.maxHeight = div.style.minHeight = h + 'px';
-            div.style.marginBottom = ((options.rowsStyle ? options.rowsStyle.marginBottom : 0) || 0) + 'px';
-            // @ts-ignore
-            div.innerText = row.title || 'Track ' + index;
-            div.id = div.innerText;
-
-            const alreadyAddedWithSuchNameElement = document.getElementById(div.innerText)
-            // Combine outlines with the same name:
-            if (alreadyAddedWithSuchNameElement) {
-                var increaseSize = Number.parseInt(alreadyAddedWithSuchNameElement.style.maxHeight) + h!;
-                alreadyAddedWithSuchNameElement.style.maxHeight = alreadyAddedWithSuchNameElement.style.minHeight = increaseSize + 'px';
-
-                return
-            }
-
-            if (outlineContainer) {
-                outlineContainer.appendChild(div);
-            }
-        });
+        let positionInPixels = this.timeline.valToPx(time) + this.timeline._leftMargin();
+        // Scroll to timeline position if timeline is out of the bounds:
+        if (positionInPixels <= fromPx || positionInPixels >= toPx) {
+            this.timeline.scrollLeft = positionInPixels;
+        }
     }
 }

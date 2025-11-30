@@ -24,5 +24,5 @@ export default function TimelineComponent() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timelineElRef.current]);
 
-    return <div style={{ width: "100%", minHeight: 300 }} ref={timelineElRef} />;
+    return <div style={{ width: "100%" }} ref={timelineElRef} />;
 }
