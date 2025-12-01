@@ -25,7 +25,7 @@ export default class TimelineController {
         /* timeline setup */
         this.timeline = timeline;
         this.timeline.setOptions({ snapStep: 50 });
-        this.timeline._formatUnitsText = (val) => val + "ms";
+        this.timeline._formatUnitsText = (val) => (val/1000) + "s";
 
         const model: ExtTimelineModel<number> = {
             rows: [{
@@ -58,6 +58,8 @@ export default class TimelineController {
 
     /* show events */
     private playShow() {
+        if (this.showPlayer != null) return;
+
         const timeStep = this.timeline.getOptions().snapStep ?? 100;
         let time = this.timeline.getTime();
         

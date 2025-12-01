@@ -1,5 +1,6 @@
 import { TimelineModel } from "animation-timeline-js";
 import TimelineController from "../TimelineController/TimelineController";
+import { NozzleUnit } from "../../model/model";
 
 export interface IAppConfig {
     msKeyframeStep: number;
@@ -11,7 +12,7 @@ export interface IAppData {
 };
 
 export interface IAppState {
-    
+    nozzles: Array<NozzleUnit>;
 };
 
 export interface IStoreState {
