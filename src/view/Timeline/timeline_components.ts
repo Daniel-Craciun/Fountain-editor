@@ -5,5 +5,5 @@ export const KeyframeEditorContainer = styled.footer`
     height: 25%;
     position: absolute;
     bottom: 0;
-    width: 100%;
+    width: 85%;
 `;

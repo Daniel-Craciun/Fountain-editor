@@ -13,6 +13,7 @@ export interface IAppData {
 
 export interface IAppState {
     nozzles: Array<NozzleUnit>;
+    selectedKeyframeIds: Array<string>;
 };
 
 export interface IStoreState {

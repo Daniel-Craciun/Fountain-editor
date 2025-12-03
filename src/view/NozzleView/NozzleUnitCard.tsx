@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ColorInput, NozzleCard, NozzleName } from "./nozzle_components";
-import { Slider } from "@mui/material"
+import { hexToRgb, Slider } from "@mui/material"
 import { NozzleUnit } from "../../model/model";
+import { rgbStringToRgbArray } from "../../controller/utils";
+import StoreController from "../../controller/store/StoreController";
 
 interface IProps {
     nozzle: NozzleUnit;
+    nozzleIndex: number;
 }
 
-export default function NozzleUnitCard({ nozzle }: IProps) {
+export default function NozzleUnitCard({ nozzle, nozzleIndex }: IProps) {
     const [colorValue, setColorValue] = useState(nozzle.getHexColor());
     const [pumpHeight, setPumpHeight] = useState(nozzle.pumpHeight);
 
@@ -21,7 +24,10 @@ export default function NozzleUnitCard({ nozzle }: IProps) {
                 value={pumpHeight}
                 onChange={(e) => {
                     // @ts-ignore
-                    setPumpHeight(e.target!.value as number);
+                    const newValue: number = e.target!.value;
+
+                    setPumpHeight(newValue as number);
+                    StoreController.updateNozzleParameter('pumpHeight', newValue, nozzleIndex);
                 }}
                 size="medium"
                 step={5}
@@ -31,7 +37,15 @@ export default function NozzleUnitCard({ nozzle }: IProps) {
                 }}
             />
 
-            <ColorInput type="color" value={colorValue} onChange={(e) => setColorValue(e.target.value)} />
+            <ColorInput 
+                type="color" 
+                value={colorValue} 
+                onChange={(e) => {
+                    const newValue = e.target.value;
+
+                    setColorValue(newValue);
+                    StoreController.updateNozzleParameter('rgb', rgbStringToRgbArray(hexToRgb(newValue)), nozzleIndex);
+                }} />
 
             <NozzleName>{pumpHeight}%</NozzleName>
         </NozzleCard>

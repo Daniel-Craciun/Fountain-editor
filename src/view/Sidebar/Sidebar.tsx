@@ -2,6 +2,7 @@ import { Tabs } from "@mui/material";
 import { SidebarContainer, SidebarTab, TabLabel } from "./sidebar_components";
 import { useState } from "react";
 import NozzlesList from "./NozzlesList/NozzlesList";
+import KeyframeControls from "./Frame/KeyframeControls/KeyframeControls";
 
 export default function Sidebar() {
     const [tabValue, setTabValue] = useState(0);
@@ -22,6 +23,12 @@ export default function Sidebar() {
                     <NozzlesList />
                 </>
             }
+
+            {tabValue === 1 &&
+                <>
+                    <KeyframeControls />
+                </>
+            }   
         </SidebarContainer>
     )
 }

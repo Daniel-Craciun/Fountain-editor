@@ -16,14 +16,18 @@ export default function NozzlesList() {
         <NozzleMainContainer>
             {nozzles.map((nozzle, idx) => (
                 <Accordion 
-                    sx={{ backgroundColor: "rgb(60,60,60)", fontSize: "1rem" }} 
+                    sx={{ 
+                        backgroundColor: "rgb(60,60,60)", 
+                        fontSize: "1rem", 
+                        margin: "0",
+                    }} 
                     key={nozzle.haName + idx}
                 >
                     <AccordionSummary 
                         expandIcon={<FontAwesomeIcon icon={faAngleDown} color="white" />} 
-                        sx={{ borderBottom: '1px solid grey', fontSize: "1rem" }}
+                        sx={{ borderBottom: '1px solid grey', }}
                     >
-                        <Typography component={"span"} color="white">{nozzle.name}</Typography>
+                        <Typography component={"span"} color="white" fontSize="0.8rem" sx={{ margin: "0" }}>{nozzle.name}</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <TextFieldList>

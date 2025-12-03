@@ -1,7 +1,14 @@
+interface INozzleUpdatedBody {
+    nozzleId: number;
+}
+
 // events interface [message name : message content]
 interface IMessage {
     playShow: undefined;
     pauseShow: undefined;
+    deleteSelectedKeyframes: undefined;
+    createKeyframeAtCurrTime: undefined;
+    nozzleUpdated: number;
 }
 
 export type EventKey = keyof IMessage;

@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Timeline } from "animation-timeline-js";
 import TimelineController from "../../controller/TimelineController/TimelineController";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setTimelineController } from "../../controller/store/appData";
+import { getNozzles } from "../../controller/store/appState";
 
 
 export default function TimelineComponent() {

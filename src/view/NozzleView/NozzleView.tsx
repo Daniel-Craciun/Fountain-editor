@@ -10,7 +10,7 @@ export default function NozzleView() {
         <NozzleViewContainer>
             <NozzleRow>
                 {nozzles.map((nozzle, idx) => (
-                    <NozzleUnitCard nozzle={nozzle} key={idx} />
+                    <NozzleUnitCard nozzle={nozzle} nozzleIndex={idx} key={Math.random()} />
                 ))}
             </NozzleRow>
         </NozzleViewContainer>
