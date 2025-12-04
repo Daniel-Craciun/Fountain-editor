@@ -21,3 +21,8 @@ export interface IStoreState {
     appData: IAppData;
     appConfig: IAppConfig;
 };
+
+export interface NozzleUpdateBody {
+    pumpHeight: number;
+    hexColor: string;
+}

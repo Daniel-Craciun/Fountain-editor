@@ -3,12 +3,12 @@ import { TimelineKeyframe, TimelineModel, TimelineRow } from "animation-timeline
 export interface ExtTimelineKeyframe<T> extends TimelineKeyframe {
     frameValue?: T;
     frameId?: string;
+    rowId?: number;
 }
 
 export interface ExtTimelineRow<T> extends TimelineRow {
     keyframes?: Array<ExtTimelineKeyframe<T>>;
     id?: number;
-    rowId?: number;
 }
 
 export interface ExtTimelineModel<T> extends TimelineModel {

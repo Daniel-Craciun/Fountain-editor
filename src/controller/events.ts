@@ -8,6 +8,7 @@ interface IMessage {
     pauseShow: undefined;
     deleteSelectedKeyframes: undefined;
     createKeyframeAtCurrTime: undefined;
+    saveCurrentKeyframe: undefined;
     nozzleUpdated: number;
 }
 

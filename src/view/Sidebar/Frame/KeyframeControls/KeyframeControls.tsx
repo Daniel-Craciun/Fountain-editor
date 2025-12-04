@@ -1,7 +1,7 @@
 import { Button } from "@mui/material";
 import { ControlButtonGroup, ControlsCard, ControlsTitle, MainContainer } from "./keyframe_components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faFloppyDisk, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";
 import { getSelectedKeyframeIds } from "../../../../controller/store/appState";
 import { dispatchCustomEvent } from "../../../../controller/events";
@@ -19,15 +19,15 @@ export default function KeyframeControls() {
                         sx={{
                             textTransform: "none",
                             color: "white",
-                            backgroundColor: 'rgb(100,100,100)',
+                            backgroundColor: 'rgba(2, 146, 9, 1)',
                             padding: '5px',
                             fontSize: "0.8rem",
                             borderRadius: "50px"
                         }}
                         size="small"
-                        onClick={() => dispatchCustomEvent('createKeyframeAtCurrTime')}
+                        onClick={() => dispatchCustomEvent('saveCurrentKeyframe')}
                     >
-                        <FontAwesomeIcon icon={faPlus} />
+                        <FontAwesomeIcon icon={faFloppyDisk} />
                     </Button>
 
                     <Button

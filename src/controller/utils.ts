@@ -53,3 +53,19 @@ export function isNumeric(str: unknown): boolean {
 	return !Number.isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
 		   !Number.isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
 }
+
+/**
+ * The function `lerp` performs linear interpolation between two numbers `a` and `b` based on a
+ * parameter `t`.
+ * @param {number} a - The parameter `a` represents the starting value from which you want to
+ * interpolate.
+ * @param {number} b - The parameter `b` represents the end value or target value that you want to
+ * interpolate towards in the linear interpolation function.
+ * @param {number} t - The parameter `t` in the `lerp` function represents the interpolation factor. It
+ * is a value between 0 and 1 that determines how much of the interpolation should be between `a` and
+ * `b`. A `t` value of 0 will result in the output being equal to
+ * @returns the linear interpolation value between `a` and `b` based on the parameter `t`.
+ */
+export function lerp(a: number, b: number, t: number): number {
+	return a + (b - a) * t;
+}
