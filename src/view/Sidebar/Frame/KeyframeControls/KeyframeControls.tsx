@@ -5,6 +5,7 @@ import { faFloppyDisk, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";
 import { getSelectedKeyframeIds } from "../../../../controller/store/appState";
 import { dispatchCustomEvent } from "../../../../controller/events";
+import { createToast } from "../../../toast";
 
 export default function KeyframeControls() {
     const selectedKeyframeIds = useSelector(getSelectedKeyframeIds);
@@ -20,12 +21,15 @@ export default function KeyframeControls() {
                             textTransform: "none",
                             color: "white",
                             backgroundColor: 'rgba(2, 146, 9, 1)',
-                            padding: '5px',
+                            padding: '7px',
                             fontSize: "0.8rem",
                             borderRadius: "50px"
                         }}
                         size="small"
-                        onClick={() => dispatchCustomEvent('saveCurrentKeyframe')}
+                        onClick={() => {
+                            dispatchCustomEvent('saveCurrentKeyframe');
+                            createToast("Keyframe saved.", 'success', 1000);
+                        }}
                     >
                         <FontAwesomeIcon icon={faFloppyDisk} />
                     </Button>
@@ -35,7 +39,7 @@ export default function KeyframeControls() {
                             textTransform: "none",
                             color: "white",
                             backgroundColor: 'red',
-                            padding: '5px',
+                            padding: '7px',
                             fontSize: "0.8rem",
                             borderRadius: "50px",
                             "&:disabled": {

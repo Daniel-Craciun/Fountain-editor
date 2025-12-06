@@ -2,7 +2,7 @@ import { Timeline, TimelineClickEvent, TimelineElement, TimelineKeyframeChangedE
 import { listenToCustomEvent } from "../events";
 import { Frame } from "../../model/model";
 import { store } from "../store";
-import { setNozzles, setSelectedKeyframeIds } from "../store/appState";
+import { setSelectedKeyframeIds } from "../store/appState";
 import { v4 } from "uuid"
 import { ExtTimelineKeyframe, ExtTimelineModel, ExtTimelineRow } from "./types";
 import StoreController from "../store/StoreController";
@@ -14,28 +14,42 @@ export default class TimelineController {
 
     private timelineTime: number;
     private keyframes: Array<ExtTimelineKeyframe<Frame>>;
-    private selectedKeyframeIds: Array<string>;
     private prevKeyframes: Array<ExtTimelineKeyframe<Frame>>;
     private nextKeyframes: Array<ExtTimelineKeyframe<Frame>>;
 
+    private copiedKeyframeIds: Array<string>;
+    
+    private selectedKeyframeIds: Array<string>;
+    private selectedRowID: number;
+
     private showPlayer: NodeJS.Timeout | null;
+
+    private activeRowFillColor: string = "rgb(60,60,60)";
+    private inactiveRowFillColor: string = "rgb(40,40,40)";
 
     constructor(timeline: Timeline) {
         this.showPlayer = null;
 
         this.timelineTime = 0;
         this.keyframes = [];
-        this.selectedKeyframeIds = [];
         this.prevKeyframes = [];
         this.nextKeyframes = [];
+
+        this.selectedKeyframeIds = [];
+        this.selectedRowID = 0;
+        
+        this.copiedKeyframeIds = [];
 
         /* model setup */
         this.model = {
             rows: [
                 {
+                    style: {
+                        fillColor: this.activeRowFillColor
+                    },
                     id: 0,
                     keyframes: []
-                }
+                },
             ]
         };
 
@@ -54,10 +68,20 @@ export default class TimelineController {
     private initEvents() {
         listenToCustomEvent("playShow", () => this.playShow());
         listenToCustomEvent("pauseShow", () => this.pauseShow());
+        listenToCustomEvent("fineForwardShow", () => this.fineForwardShow());
+        listenToCustomEvent("stepForwardShow", () => this.stepForwardShow());
+        listenToCustomEvent("fastForwardShow", () => this.fastForwardShow());
+        listenToCustomEvent("fineBackwardShow", () => this.fineBackwardShow());
+        listenToCustomEvent("stepBackwardShow", () => this.stepBackwardShow());
+        listenToCustomEvent("fastBackwardShow", () => this.fastBackwardShow());
+
+        listenToCustomEvent("copySelectedKeyframes", () => this.copySelectedKeyframes());
+        listenToCustomEvent("pasteCopiedKeyframes", () => this.pasteCopiedKeyframes());
+
         listenToCustomEvent('deleteSelectedKeyframes', () => this.deleteSelectedKeyframes());
         listenToCustomEvent('saveCurrentKeyframe', () => this.saveCurrentKeyframe());
-        listenToCustomEvent('nozzleUpdated', (nozzleIdx: number) => this.nozzleUpdatedEvent(nozzleIdx));
 
+        
         this.timeline.onContextMenu((e) => {
             e.args?.preventDefault();
             this.handleRightClick(e);
@@ -92,6 +116,9 @@ export default class TimelineController {
                 return;
             }
         }
+
+        this.prevKeyframes = [];
+        this.nextKeyframes = [];
     }
 
     /* gets the current keyframe at the current time */
@@ -114,6 +141,9 @@ export default class TimelineController {
                 currentRowId = this.keyframes[i].rowId!;
 
                 rows.push({
+                    style: {
+                        fillColor: this.selectedRowID === currentRowId ? this.activeRowFillColor : this.inactiveRowFillColor
+                    },
                     id: currentRowId,
                     keyframes: [this.keyframes[i]]
                 });
@@ -180,6 +210,76 @@ export default class TimelineController {
         
         this.timeline.setOptions({ timelineDraggable: true });
     }
+    
+    private fineForwardShow() {
+        this.timelineTime += this.timeline.getOptions().snapStep ?? 50;
+        this.timeline.setTime(this.timelineTime);
+        this.alignTimelineInView(this.timelineTime);
+    }
+
+    private stepForwardShow() {
+        this.timelineTime += 500;
+        this.timeline.setTime(this.timelineTime);
+        this.alignTimelineInView(this.timelineTime);
+    }
+
+    private fastForwardShow() {
+        const lastKeyframe = this.keyframes[this.keyframes.length-1];
+
+        if (lastKeyframe) {
+            this.timelineTime = lastKeyframe.val;
+            this.timeline.setTime(this.timelineTime);
+            this.alignTimelineInView(this.timelineTime);
+        }
+    }
+
+    private fineBackwardShow() {
+        this.timelineTime -= this.timeline.getOptions().snapStep ?? 50;
+        this.timeline.setTime(this.timelineTime);
+        this.alignTimelineInView(this.timelineTime);
+    }
+
+    private stepBackwardShow() {
+        this.timelineTime -= 500;
+        this.timeline.setTime(this.timelineTime);
+        this.alignTimelineInView(this.timelineTime);
+    }
+
+    private fastBackwardShow() {
+        this.timelineTime = 0;
+        this.timeline.setTime(this.timelineTime);
+        this.alignTimelineInView(this.timelineTime);
+    }
+
+
+    private copySelectedKeyframes() {
+        this.copiedKeyframeIds = [...this.selectedKeyframeIds];
+    }
+
+    private pasteCopiedKeyframes() {
+        let referenceVal = 0;
+
+        for (let i = 0; i < this.copiedKeyframeIds.length; i++) {
+            const kf = this.keyframes.find((k) => k.frameId === this.copiedKeyframeIds[i])!;
+
+            if (i === 0) {
+                referenceVal = this.timelineTime - kf.val;
+            }
+
+            const newKeyframe: ExtTimelineKeyframe<Frame> = {
+                ...kf,
+                val: kf.val + referenceVal,
+                frameValue: kf.frameValue?.clone(),
+                frameId: v4(),
+                selected: false
+            }
+
+            this.keyframes.push(newKeyframe);
+        }
+
+        this.setModel();
+    }
+
 
     private deleteSelectedKeyframes() {
         let newKeyframes = [];
@@ -219,25 +319,12 @@ export default class TimelineController {
         }
     }
 
-    private nozzleUpdatedEvent(nozzleIdx: number) {
-        if (this.selectedKeyframeIds.length === 1) {
-            const nozzle = store.getState().appState.nozzles[nozzleIdx];
-
-            for (let i = 0; i < this.keyframes.length; i++) {
-                if (this.keyframes[i].frameId === this.selectedKeyframeIds[0]) {
-                    this.keyframes[i].frameValue?.updateNozzle(nozzle);
-                    return;
-                }
-            }
-        }
-    }
-
     /* timeline display */
     private alignTimelineInView(time: number) {
         const fromPx = this.timeline.scrollLeft;
         const toPx = this.timeline.scrollLeft + this.timeline.getClientWidth();
 
-        let positionInPixels = this.timeline.valToPx(time) + this.timeline._leftMargin();
+        let positionInPixels = this.timeline.valToPx(time);
         // Scroll to timeline position if timeline is out of the bounds:
         if (positionInPixels <= fromPx || positionInPixels >= toPx) {
             this.timeline.scrollLeft = positionInPixels;
@@ -271,9 +358,7 @@ export default class TimelineController {
 
         if (e.selected.length === 1) {
             this.timeline.setTime(e.selected[0].val);
-
-            const nozzles = (e.selected[0] as ExtTimelineKeyframe<Frame>).frameValue!.getNozzles();
-            store.dispatch(setNozzles([...nozzles]));
+            this.computeFrameInterpolation();
         }
     }
 
@@ -282,9 +367,11 @@ export default class TimelineController {
     }
 
     private computeFrameInterpolation() {
+        if (this.keyframes.length === 0) return;
+
         this.getPrevAndNextFrames(this.timelineTime);
-        const prevTime = this.prevKeyframes[0].val ?? 0;
-        const nextTime = this.nextKeyframes[0].val ?? 0;
+        const prevTime = this.prevKeyframes[0]?.val ?? 0;
+        const nextTime = this.nextKeyframes[0]?.val ?? 0;
 
         /* compute the t value of how far along we are in the frame transitions */
         let t = (this.timelineTime - prevTime) / (nextTime - prevTime);
@@ -293,17 +380,19 @@ export default class TimelineController {
         else if (t < 0) t = 0;
 
         /* interpolate the frames */
-        const interpolatedFrame = Frame.computeInterpolation(this.prevKeyframes[0].frameValue!, this.nextKeyframes[0].frameValue!, t);
-        const nozzles = interpolatedFrame.getNozzles();
+        if (this.prevKeyframes.length > 0 && this.nextKeyframes.length > 0) {
+            const interpolatedFrame = Frame.computeInterpolation(this.prevKeyframes[0].frameValue!, this.nextKeyframes[0].frameValue!, t);
+            const nozzles = interpolatedFrame.getNozzles();
 
-        for (let i = 0; i < nozzles.length; i++) {
-            const nozzle = nozzles[i];
+            for (let i = 0; i < nozzles.length; i++) {
+                const nozzle = nozzles[i];
 
-            StoreController.updateNozzleParameter('pumpHeight', nozzle.pumpHeight, i);
-            StoreController.updateNozzleParameter('rgb', nozzle.rgb, i);
- 
-            const event = new CustomEvent(`nozzle-${nozzle.id}`, { detail: { pumpHeight: nozzle.pumpHeight, hexColor: nozzle.getHexColor() }});
-            window.dispatchEvent(event);
+                StoreController.updateNozzleParameter('pumpHeight', nozzle.pumpHeight, i);
+                StoreController.updateNozzleParameter('rgb', nozzle.rgb, i);
+    
+                const event = new CustomEvent(`nozzle-${nozzle.id}`, { detail: { pumpHeight: nozzle.pumpHeight, hexColor: nozzle.getHexColor() }});
+                window.dispatchEvent(event);
+            }
         }
     }
 

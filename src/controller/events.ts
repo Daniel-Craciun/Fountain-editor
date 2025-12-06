@@ -1,15 +1,19 @@
-interface INozzleUpdatedBody {
-    nozzleId: number;
-}
-
 // events interface [message name : message content]
 interface IMessage {
     playShow: undefined;
     pauseShow: undefined;
+    fineForwardShow: undefined;
+    stepForwardShow: undefined;
+    fastForwardShow: undefined;
+    fineBackwardShow: undefined;
+    stepBackwardShow: undefined;
+    fastBackwardShow: undefined;
+
+    copySelectedKeyframes: undefined;
+    pasteCopiedKeyframes: undefined;
+
     deleteSelectedKeyframes: undefined;
-    createKeyframeAtCurrTime: undefined;
     saveCurrentKeyframe: undefined;
-    nozzleUpdated: number;
 }
 
 export type EventKey = keyof IMessage;

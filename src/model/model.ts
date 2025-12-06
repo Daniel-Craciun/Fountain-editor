@@ -84,6 +84,12 @@ export class Frame {
         return clonedNozzles;
     }
 
+    clone(): Frame {
+        const newFrame = new Frame();
+        newFrame.setNozzles(this.cloneNozzles());
+        return newFrame;
+    }
+
     updateNozzle(nozzle: NozzleUnit) {
         let newNozzles = [];
 
