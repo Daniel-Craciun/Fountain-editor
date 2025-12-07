@@ -9,6 +9,9 @@ interface IMessage {
     stepBackwardShow: undefined;
     fastBackwardShow: undefined;
 
+    selectPrevRow: undefined;
+    selectNextRow: undefined;
+
     copySelectedKeyframes: undefined;
     pasteCopiedKeyframes: undefined;
 

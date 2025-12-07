@@ -1,21 +1,27 @@
 import { TimelineKeyframe, TimelineModel, TimelineRow } from "animation-timeline-js";
+import { Frame } from "../../model/model";
 
-export interface ExtTimelineKeyframe<T> extends TimelineKeyframe {
-    frameValue?: T;
+export interface ExtTimelineKeyframe extends TimelineKeyframe {
+    frameValue?: Frame;
     frameId?: string;
     rowId?: number;
 }
 
-export interface ExtTimelineRow<T> extends TimelineRow {
-    keyframes?: Array<ExtTimelineKeyframe<T>>;
+export interface ExtTimelineRow extends TimelineRow {
+    keyframes?: Array<ExtTimelineKeyframe>;
     id?: number;
 }
 
-export interface ExtTimelineModel<T> extends TimelineModel {
-    rows: Array<ExtTimelineRow<T>>;
+export interface ExtTimelineModel extends TimelineModel {
+    rows: Array<ExtTimelineRow>;
 }
 
 export interface KeyframeLocation {
     rowNumber: number;
     frameNumber: number;
+}
+
+export interface TPrevNextKeyframes {
+    prev: Array<ExtTimelineKeyframe | null>;
+    next: Array<ExtTimelineKeyframe | null>;
 }

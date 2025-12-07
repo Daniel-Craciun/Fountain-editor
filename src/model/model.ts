@@ -10,6 +10,8 @@ export class NozzleUnit {
     public brightness: number;
     public calibration: number;
     public id: number;
+    public pumpDisabled: boolean;
+    public lightDisabled: boolean;
     
     constructor(haName: string = "", name: string = "") {
         this.haName = haName;
@@ -19,6 +21,8 @@ export class NozzleUnit {
         this.brightness = 100;
         this.calibration = 0;
         this.id = NozzleUnit.idCounter++;
+        this.pumpDisabled = false;
+        this.lightDisabled = false;
     }
 
     getHexColor(): string {
@@ -34,6 +38,8 @@ export class NozzleUnit {
         nozzleUnit.brightness = this.brightness;
         nozzleUnit.calibration = this.calibration;
         nozzleUnit.id = id ?? this.id;
+        nozzleUnit.pumpDisabled = this.pumpDisabled;
+        nozzleUnit.lightDisabled = this.lightDisabled;
 
         return nozzleUnit;
     }

@@ -14,6 +14,7 @@ export interface IAppData {
 export interface IAppState {
     nozzles: Array<NozzleUnit>;
     selectedKeyframeIds: Array<string>;
+    selectedRowID: number;
 };
 
 export interface IStoreState {

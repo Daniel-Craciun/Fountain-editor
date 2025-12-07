@@ -15,7 +15,8 @@ const initialAppState: IAppState = {
         new NozzleUnit("fountain_nozzle_unit_8cfc9c", "S4"),
         new NozzleUnit("fountain_nozzle_unit_8aedd8", "S5")
     ],
-    selectedKeyframeIds: []
+    selectedKeyframeIds: [],
+    selectedRowID: 0
 }
 
 const appStateSlice = createSlice({
@@ -30,19 +31,25 @@ const appStateSlice = createSlice({
 
         setSelectedKeyframeIds: (state, action: PayloadAction<Array<string>>) => {
             state.selectedKeyframeIds = action.payload;
-        }
+        },
+
+        setSelectedRowID: (state, action: PayloadAction<number>) => {
+            state.selectedRowID = action.payload;
+        },
     }
 });
 
 // actions
 export const {
     setNozzles,
-    setSelectedKeyframeIds
+    setSelectedKeyframeIds,
+    setSelectedRowID
 } = appStateSlice.actions;
 
 // getters
 export const getNozzles = (state: IStoreState) => state.appState.nozzles;
 export const getSelectedKeyframeIds = (state: IStoreState) => state.appState.selectedKeyframeIds;
+export const getSelectedRowID = (state: IStoreState) => state.appState.selectedRowID;
 
 // reducer
 export const appStateReducer = appStateSlice.reducer;

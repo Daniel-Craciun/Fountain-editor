@@ -38,6 +38,14 @@ export default function Header() {
 			e.preventDefault();
 			dispatchCustomEvent('fineForwardShow');
 		}
+        else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            dispatchCustomEvent('selectPrevRow');
+        }
+        else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            dispatchCustomEvent('selectNextRow');
+        }
         else if (e.code === "Space") {
             e.preventDefault();
             setIsPlaying((prev) => {
