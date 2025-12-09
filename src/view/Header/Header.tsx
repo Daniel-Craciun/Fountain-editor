@@ -16,9 +16,12 @@ export default function Header() {
 		if (e.key === "k") {
 			e.preventDefault();
 
-			dispatchCustomEvent('saveCurrentKeyframe');
+			dispatchCustomEvent('saveCurrentKeyframe', e.ctrlKey || e.metaKey);
 			createToast("Keyframe saved.", 'success', 1000);
 		}
+        else if (e.key === "a") {
+            dispatchCustomEvent('selectAllNozzles');
+        }
 		else if (e.key === "c" && (e.ctrlKey || e.metaKey)) {
 			dispatchCustomEvent('copySelectedKeyframes');
 			createToast("Keyframe(s) copied.", 'success', 1000);

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { IAppState, IStoreState } from "./types";
+import { IAppState, IStoreState, TNozzleCopyState } from "./types";
 import { NozzleUnit } from "../../model/model";
 
 const initialAppState: IAppState = {
@@ -16,7 +16,13 @@ const initialAppState: IAppState = {
         new NozzleUnit("fountain_nozzle_unit_8aedd8", "S5")
     ],
     selectedKeyframeIds: [],
-    selectedRowID: 0
+    selectedRowID: 0,
+    selectedNozzleIds: [],
+    nozzleCopyState: {
+        pump: null,
+        light: null,
+        brightness: null,
+    }
 }
 
 const appStateSlice = createSlice({
@@ -36,6 +42,14 @@ const appStateSlice = createSlice({
         setSelectedRowID: (state, action: PayloadAction<number>) => {
             state.selectedRowID = action.payload;
         },
+
+        setSelectedNozzleIds: (state, action: PayloadAction<Array<number>>) => {
+            state.selectedNozzleIds = action.payload;
+        },
+
+        setNozzleCopyState: (state, action: PayloadAction<TNozzleCopyState>) => {
+            state.nozzleCopyState = action.payload;
+        }
     }
 });
 
@@ -43,13 +57,17 @@ const appStateSlice = createSlice({
 export const {
     setNozzles,
     setSelectedKeyframeIds,
-    setSelectedRowID
+    setSelectedRowID,
+    setSelectedNozzleIds,
+    setNozzleCopyState
 } = appStateSlice.actions;
 
 // getters
 export const getNozzles = (state: IStoreState) => state.appState.nozzles;
 export const getSelectedKeyframeIds = (state: IStoreState) => state.appState.selectedKeyframeIds;
 export const getSelectedRowID = (state: IStoreState) => state.appState.selectedRowID;
+export const getSelectedNozzleIds = (state: IStoreState) => state.appState.selectedNozzleIds;
+export const getNozzleCopyState = (state: IStoreState) => state.appState.nozzleCopyState;
 
 // reducer
 export const appStateReducer = appStateSlice.reducer;

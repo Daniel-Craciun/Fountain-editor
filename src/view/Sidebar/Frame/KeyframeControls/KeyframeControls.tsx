@@ -27,7 +27,7 @@ export default function KeyframeControls() {
                         }}
                         size="small"
                         onClick={() => {
-                            dispatchCustomEvent('saveCurrentKeyframe');
+                            dispatchCustomEvent('saveCurrentKeyframe', false);
                             createToast("Keyframe saved.", 'success', 1000);
                         }}
                     >

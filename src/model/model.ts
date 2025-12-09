@@ -1,4 +1,4 @@
-import { lerp, rgbToHex } from "../controller/utils";
+import { componentToHex, lerp, rgbToHex } from "../controller/utils";
 
 export class NozzleUnit {
     private static idCounter = 0;
@@ -26,7 +26,7 @@ export class NozzleUnit {
     }
 
     getHexColor(): string {
-        return rgbToHex(`rgb(${this.rgb.join(',')})`)
+        return rgbToHex(`rgb(${this.rgb.join(',')})`);
     }
 
     clone(id?: number): NozzleUnit {
@@ -58,6 +58,10 @@ export class NozzleUnit {
             interpNozzle.rgb[0] = Math.round(lerp(r1, r2, t));
             interpNozzle.rgb[1] = Math.round(lerp(g1, g2, t));
             interpNozzle.rgb[2] = Math.round(lerp(b1, b2, t));
+        }
+
+        if (nozzle1.brightness != nozzle2.brightness) {
+            interpNozzle.brightness = Math.round(lerp(nozzle1.brightness, nozzle2.brightness, t));
         }
 
         return interpNozzle;

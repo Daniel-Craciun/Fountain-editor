@@ -1,11 +1,12 @@
 import { Timeline, TimelineClickEvent, TimelineElement, TimelineKeyframeChangedEvent, TimelineSelectedEvent, TimelineTimeChangedEvent } from "animation-timeline-js"
-import { listenToCustomEvent } from "../events";
+import { listenToCustomEvent, TNozzleSelect } from "../events";
 import { Frame } from "../../model/model";
 import { store } from "../store";
-import { setSelectedKeyframeIds, setSelectedRowID } from "../store/appState";
+import { setNozzles, setSelectedKeyframeIds, setSelectedNozzleIds, setSelectedRowID } from "../store/appState";
 import { v4 } from "uuid"
 import { ExtTimelineKeyframe, ExtTimelineModel, ExtTimelineRow, TPrevNextKeyframes } from "./types";
 import StoreController from "../store/StoreController";
+import yaml from "js-yaml";
 
 
 export default class TimelineController {
@@ -14,8 +15,6 @@ export default class TimelineController {
 
     private timelineTime: number;
     private keyframes: Array<ExtTimelineKeyframe>;
-    private prevKeyframes: Array<ExtTimelineKeyframe>;
-    private nextKeyframes: Array<ExtTimelineKeyframe>;
 
     private copiedKeyframeIds: Array<string>;
     
@@ -33,8 +32,6 @@ export default class TimelineController {
 
         this.timelineTime = 0;
         this.keyframes = [];
-        this.prevKeyframes = [];
-        this.nextKeyframes = [];
 
         this.selectedKeyframeIds = [];
         this.selectedRowID = 0;
@@ -75,23 +72,29 @@ export default class TimelineController {
 
     /* events */
     private initEvents() {
-        listenToCustomEvent("playShow", () => this.playShow());
+        listenToCustomEvent("playShow",  () => this.playShow());
         listenToCustomEvent("pauseShow", () => this.pauseShow());
-        listenToCustomEvent("fineForwardShow", () => this.fineForwardShow());
-        listenToCustomEvent("stepForwardShow", () => this.stepForwardShow());
-        listenToCustomEvent("fastForwardShow", () => this.fastForwardShow());
+
+        listenToCustomEvent("fineForwardShow",  () => this.fineForwardShow());
+        listenToCustomEvent("stepForwardShow",  () => this.stepForwardShow());
+        listenToCustomEvent("fastForwardShow",  () => this.fastForwardShow());
         listenToCustomEvent("fineBackwardShow", () => this.fineBackwardShow());
         listenToCustomEvent("stepBackwardShow", () => this.stepBackwardShow());
         listenToCustomEvent("fastBackwardShow", () => this.fastBackwardShow());
 
         listenToCustomEvent("copySelectedKeyframes", () => this.copySelectedKeyframes());
-        listenToCustomEvent("pasteCopiedKeyframes", () => this.pasteCopiedKeyframes());
+        listenToCustomEvent("pasteCopiedKeyframes",  () => this.pasteCopiedKeyframes());
 
         listenToCustomEvent('deleteSelectedKeyframes', () => this.deleteSelectedKeyframes());
-        listenToCustomEvent('saveCurrentKeyframe', () => this.saveCurrentKeyframe());
+        listenToCustomEvent('saveCurrentKeyframe',     (saveAll) => this.saveCurrentKeyframe(saveAll));
 
         listenToCustomEvent('selectPrevRow', () => this.selectPrevRow());
         listenToCustomEvent('selectNextRow', () => this.selectNextRow());
+        listenToCustomEvent('selectNozzle',      (e) => this.selectNozzle(e));
+        listenToCustomEvent('pasteNozzleValues', (e) => this.pasteNozzleValues(e));
+        listenToCustomEvent('selectAllNozzles',  () => this.selectAllNozzles());
+
+        listenToCustomEvent('exportProject', () => this.exportYaml());
 
         
         this.timeline.onContextMenu((e) => {
@@ -117,23 +120,6 @@ export default class TimelineController {
 
     private getKeyframesFromRow(rowID: number): Array<ExtTimelineKeyframe> {
         return this.keyframes.filter((kf) => kf.rowId === rowID);
-    }
-
-    private getKeyframesFromTime(time: number): Array<ExtTimelineKeyframe> {
-        return this.keyframes.filter((kf) => kf.val === time);
-    }
-
-    private selectKeyframesAtTime(time: number, rowsToSelect: Array<number>) {
-        let keyframesToSelect = [];
-
-        for (let i = 0; i < this.keyframes.length; i++) {
-            if (this.keyframes[i].val === time && rowsToSelect.includes(this.keyframes[i].rowId!)) {
-                keyframesToSelect.push(this.keyframes[i]);
-                this.timeline.select(this.keyframes[i]);
-            }
-        }
-
-        this.timeline.select(keyframesToSelect);
     }
 
     /* get the prev and next keyframes at the current time */
@@ -167,8 +153,8 @@ export default class TimelineController {
     }
 
     /* gets the current keyframe at the current time */
-    private getKeyframeIndexAt(time: number): number {
-        return this.keyframes.findIndex((frame) => frame.val === time && frame.rowId === this.selectedRowID) ?? -1;
+    private getKeyframeIndexAt(time: number, id: number = this.selectedRowID): number {
+        return this.keyframes.findIndex((frame) => frame.val === time && frame.rowId ===  id) ?? -1;
     }
 
     /* apply row specific parameters to nozzles */
@@ -335,6 +321,7 @@ export default class TimelineController {
         this.setModel();
     }
 
+
     private selectPrevRow() {
         this.selectedRowID -= 1;
 
@@ -361,6 +348,67 @@ export default class TimelineController {
         store.dispatch(setSelectedRowID(this.selectedRowID));
     }
 
+    private selectNozzle(body: TNozzleSelect) {
+        const { selectedNozzleIds } = store.getState().appState;
+
+        /* clear all selected nozzles */
+        if (body.nozzleID === -1) {
+            store.dispatch(setSelectedNozzleIds([]));
+            return;
+        }
+
+        let newIds = [...selectedNozzleIds];
+
+        if (body.shouldSelect) {
+            if (body.overrideSelected) {
+                newIds = [body.nozzleID];
+            }
+            else {
+                newIds.push(body.nozzleID);
+            }
+        }
+        else {
+            newIds = newIds.filter((id) => id !== body.nozzleID);
+        }
+
+        store.dispatch(setSelectedNozzleIds(newIds));
+    }
+
+    private pasteNozzleValues(nozzleID: number) {
+        const selectedNozzleIds = [...store.getState().appState.selectedNozzleIds];
+
+        if (!selectedNozzleIds.includes(nozzleID)) {
+            selectedNozzleIds.push(nozzleID);
+        }
+
+        const nozzles = [...store.getState().appState.nozzles];
+        const { nozzleCopyState } = store.getState().appState;
+
+        for (let i = 0; i < nozzles.length; i++) {
+            if (selectedNozzleIds.includes(nozzles[i].id)) {
+                if (nozzleCopyState.pump) {
+                    nozzles[i].pumpHeight = nozzleCopyState.pump;
+                }
+
+                if (nozzleCopyState.light) {
+                    nozzles[i].rgb = nozzleCopyState.light;
+                }
+
+                if (nozzleCopyState.brightness) {
+                    nozzles[i].brightness = nozzleCopyState.brightness;
+                }
+            }
+        }
+
+        store.dispatch(setNozzles(nozzles));
+    }
+
+    private selectAllNozzles() {
+        const { nozzles } = store.getState().appState;
+        const nozzleIds = nozzles.map((n) => n.id);
+        store.dispatch(setSelectedNozzleIds(nozzleIds));
+    }
+
 
     private deleteSelectedKeyframes() {
         let newKeyframes = [];
@@ -377,17 +425,17 @@ export default class TimelineController {
         this.computeFrameInterpolation();
     }
 
-    private createKeyframeAt(time: number) {
+    private createKeyframeAt(time: number, rowID: number = this.selectedRowID) {
         const { nozzles } = store.getState().appState;
 
         const frame = new Frame();
         frame.setNozzles(nozzles);
 
-        this.addKeyframe(this.selectedRowID, time, frame);
+        this.addKeyframe(rowID, time, frame);
     }
 
-    private saveCurrentKeyframe() {
-        const keyframeIndex = this.getKeyframeIndexAt(this.timelineTime);
+    private saveKeyframeAt(time: number, rowID: number) {
+        const keyframeIndex = this.getKeyframeIndexAt(time, rowID);
 
         if (keyframeIndex > -1) {
             const { nozzles } = store.getState().appState;
@@ -396,7 +444,18 @@ export default class TimelineController {
             this.keyframes[keyframeIndex].frameValue?.setNozzles(copiedNozzles);
         }
         else {
-            this.createKeyframeAt(this.timelineTime);
+            this.createKeyframeAt(time, rowID);
+        }
+    }
+
+    private saveCurrentKeyframe(saveAllTracks: boolean) {
+        if (saveAllTracks) {
+            for (let i = 0; i < this.rowCount; i++) {
+                this.saveKeyframeAt(this.timelineTime, i);
+            }
+        }
+        else {
+            this.saveKeyframeAt(this.timelineTime, this.selectedRowID);
         }
     }
 
@@ -509,15 +568,23 @@ export default class TimelineController {
 
                 if (j === 1) {
                     resultNozzles[i].rgb = [...frameNozzles[i].rgb];
+                    resultNozzles[i].brightness = frameNozzles[i].brightness;
                 }
             }
 
             StoreController.updateNozzleParameter('pumpHeight', resultNozzles[i].pumpHeight, i);
             StoreController.updateNozzleParameter('rgb', resultNozzles[i].rgb, i);
+            StoreController.updateNozzleParameter('brightness', resultNozzles[i].brightness, i);
 
             const event = new CustomEvent(
                 `nozzle-${resultNozzles[i].id}`, 
-                { detail: { pumpHeight: resultNozzles[i].pumpHeight, hexColor: resultNozzles[i].getHexColor() }}
+                { 
+                    detail: { 
+                        pumpHeight: resultNozzles[i].pumpHeight, 
+                        hexColor: resultNozzles[i].getHexColor(),
+                        brightness: resultNozzles[i].brightness
+                    }
+                }
             );
             window.dispatchEvent(event);
         }
@@ -526,5 +593,34 @@ export default class TimelineController {
     private handleTimeChange(e: TimelineTimeChangedEvent) {
         this.timelineTime = e.val;
         this.computeFrameInterpolation();
+    }
+
+    /* yaml exporting */
+    private exportYaml() {
+        const { nozzles } = store.getState().appState;
+
+        /* inital object */
+        const yamlObject: any = {
+            config: {
+                pulse_rate: this.timeline.getOptions().snapStep ?? 50
+            },
+            keyframes: [],
+            timeline: [],
+        };
+
+        /* put the nozzle configurations into the object */
+        for (let i = 0; i < nozzles.length; i++) {
+            yamlObject.config[nozzles[i].name] = {
+                name: nozzles[i].haName,
+                calibration: nozzles[i].calibration
+            }
+        }
+
+        /* load the current keyframe data into the object */
+        
+
+        const yamlResult = yaml.dump(yamlObject);
+
+        console.log(yamlResult);
     }
 }

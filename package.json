@@ -21,6 +21,7 @@
     "@theatre/core": "^0.7.2",
     "@theatre/studio": "^0.7.2",
     "animation-timeline-js": "^2.3.5",
+    "js-yaml": "^4.1.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-redux": "^9.2.0",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",

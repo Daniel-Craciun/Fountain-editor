@@ -1,6 +1,11 @@
-import { TimelineModel } from "animation-timeline-js";
 import TimelineController from "../TimelineController/TimelineController";
 import { NozzleUnit } from "../../model/model";
+
+export interface TNozzleCopyState {
+    pump: number | null;
+    light: Array<number> | null;
+    brightness: number | null;
+}
 
 export interface IAppConfig {
     msKeyframeStep: number;
@@ -8,13 +13,14 @@ export interface IAppConfig {
 
 export interface IAppData {
     timelineController: TimelineController | null;
-    timelineModel: TimelineModel | null;
 };
 
 export interface IAppState {
     nozzles: Array<NozzleUnit>;
     selectedKeyframeIds: Array<string>;
     selectedRowID: number;
+    selectedNozzleIds: Array<number>;
+    nozzleCopyState: TNozzleCopyState;
 };
 
 export interface IStoreState {

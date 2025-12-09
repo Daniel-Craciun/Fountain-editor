@@ -12,7 +12,7 @@ export const NozzleName = styled.span`
     text-align: center;
 `;
 
-export const NozzleCard = styled.div`
+export const NozzleCard = styled.div<{selected: boolean}>`
     height: 100%;
     width: 5%;
     display: flex;
@@ -23,10 +23,11 @@ export const NozzleCard = styled.div`
     margin-left: 5px;
     margin-right: 5px;
     transition: 0.1s;
+    background-color: ${props => props.selected ? "rgb(50,50,50)" : "none"};
     
     &:hover {
         cursor: pointer;
-        background-color: rgb(50,50,50);
+        background-color: rgb(60,60,60);
     }
 `;
 

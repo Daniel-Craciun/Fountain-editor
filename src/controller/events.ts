@@ -1,3 +1,9 @@
+export interface TNozzleSelect {
+    nozzleID: number;
+    shouldSelect: boolean;
+    overrideSelected: boolean;
+}
+
 // events interface [message name : message content]
 interface IMessage {
     playShow: undefined;
@@ -11,12 +17,17 @@ interface IMessage {
 
     selectPrevRow: undefined;
     selectNextRow: undefined;
+    selectNozzle: TNozzleSelect;
+    selectAllNozzles: undefined;
+    pasteNozzleValues: number;
 
     copySelectedKeyframes: undefined;
     pasteCopiedKeyframes: undefined;
 
     deleteSelectedKeyframes: undefined;
-    saveCurrentKeyframe: undefined;
+    saveCurrentKeyframe: boolean;
+
+    exportProject: undefined;
 }
 
 export type EventKey = keyof IMessage;
