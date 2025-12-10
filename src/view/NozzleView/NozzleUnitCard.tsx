@@ -6,6 +6,8 @@ import { rgbStringToRgbArray } from "../../controller/utils";
 import StoreController from "../../controller/store/StoreController";
 import { copyLightValue, copyPumpAndLight, copyPumpValue, selectNozzle } from "./nozzle_logic";
 import { dispatchCustomEvent } from "../../controller/events";
+import { useDispatch } from "react-redux";
+import { setAreNozzlesSaved } from "../../controller/store/appState";
 
 interface IProps {
     nozzle: NozzleUnit;
@@ -17,6 +19,8 @@ interface IProps {
 }
 
 export default function NozzleUnitCard({ nozzle, disablePump, disableLight, disablePaste, nozzleIndex, selected }: IProps) {
+    const dispatch = useDispatch();
+
     const [colorValue, setColorValue] = useState(nozzle.getHexColor());
     const [pumpHeight, setPumpHeight] = useState(nozzle.pumpHeight);
     const [brightness, setBrightness] = useState(nozzle.brightness);
@@ -70,6 +74,8 @@ export default function NozzleUnitCard({ nozzle, disablePump, disableLight, disa
                             setPumpHeight(newValue);
                             StoreController.updateNozzleParameter('pumpHeight', newValue, nozzleIndex);
                         }
+
+                        dispatch(setAreNozzlesSaved(false));
                     }}
                     size="medium"
                     step={5}
@@ -106,6 +112,7 @@ export default function NozzleUnitCard({ nozzle, disablePump, disableLight, disa
                         setColorValue(newValue);
 
                         StoreController.updateNozzleParameter('rgb', rgbStringToRgbArray(hexToRgb(newValue)), nozzleIndex);
+                        dispatch(setAreNozzlesSaved(false));
                     }} 
                     disabled={disableLight}
                 />
@@ -134,6 +141,7 @@ export default function NozzleUnitCard({ nozzle, disablePump, disableLight, disa
                     onClick={(e) => {
                         e.stopPropagation();
                         dispatchCustomEvent('pasteNozzleValues', nozzle.id);
+                        dispatch(setAreNozzlesSaved(false));
                     }}
                 >
                     Paste

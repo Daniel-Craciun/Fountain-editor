@@ -21,6 +21,7 @@ export interface IAppState {
     selectedRowID: number;
     selectedNozzleIds: Array<number>;
     nozzleCopyState: TNozzleCopyState;
+    areNozzlesSaved: boolean;
 };
 
 export interface IStoreState {

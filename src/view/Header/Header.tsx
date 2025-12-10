@@ -33,6 +33,10 @@ export default function Header() {
 			e.preventDefault();
 			dispatchCustomEvent('deleteSelectedKeyframes');
 		}
+        else if (e.key === "t") {
+            e.preventDefault();
+            dispatchCustomEvent('invertSelKeyframesTrans');
+        }
 		else if (e.key === "ArrowLeft") {
 			e.preventDefault();
 			dispatchCustomEvent('fineBackwardShow');

@@ -5,6 +5,7 @@ export interface ExtTimelineKeyframe extends TimelineKeyframe {
     frameValue?: Frame;
     frameId?: string;
     rowId?: number;
+    transition?: boolean;
 }
 
 export interface ExtTimelineRow extends TimelineRow {

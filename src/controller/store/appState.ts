@@ -22,7 +22,8 @@ const initialAppState: IAppState = {
         pump: null,
         light: null,
         brightness: null,
-    }
+    },
+    areNozzlesSaved: true
 }
 
 const appStateSlice = createSlice({
@@ -49,6 +50,10 @@ const appStateSlice = createSlice({
 
         setNozzleCopyState: (state, action: PayloadAction<TNozzleCopyState>) => {
             state.nozzleCopyState = action.payload;
+        },
+
+        setAreNozzlesSaved: (state, action: PayloadAction<boolean>) => {
+            state.areNozzlesSaved = action.payload;
         }
     }
 });
@@ -59,7 +64,8 @@ export const {
     setSelectedKeyframeIds,
     setSelectedRowID,
     setSelectedNozzleIds,
-    setNozzleCopyState
+    setNozzleCopyState,
+    setAreNozzlesSaved
 } = appStateSlice.actions;
 
 // getters
@@ -68,6 +74,7 @@ export const getSelectedKeyframeIds = (state: IStoreState) => state.appState.sel
 export const getSelectedRowID = (state: IStoreState) => state.appState.selectedRowID;
 export const getSelectedNozzleIds = (state: IStoreState) => state.appState.selectedNozzleIds;
 export const getNozzleCopyState = (state: IStoreState) => state.appState.nozzleCopyState;
+export const getAreNozzlesSaved = (state: IStoreState) => state.appState.areNozzlesSaved;
 
 // reducer
 export const appStateReducer = appStateSlice.reducer;

@@ -3,6 +3,7 @@ import { SidebarContainer, SidebarTab, TabLabel } from "./sidebar_components";
 import { useState } from "react";
 import NozzlesList from "./NozzlesList/NozzlesList";
 import KeyframeControls from "./Frame/KeyframeControls/KeyframeControls";
+import TrackControls from "./Frame/TrackControls/TrackControls";
 
 export default function Sidebar() {
     const [tabValue, setTabValue] = useState(0);
@@ -27,6 +28,7 @@ export default function Sidebar() {
             {tabValue === 1 &&
                 <>
                     <KeyframeControls />
+                    <TrackControls />
                 </>
             }   
         </SidebarContainer>

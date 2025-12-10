@@ -27,6 +27,8 @@ interface IMessage {
     deleteSelectedKeyframes: undefined;
     saveCurrentKeyframe: boolean;
 
+    invertSelKeyframesTrans: undefined;
+
     exportProject: undefined;
 }
 

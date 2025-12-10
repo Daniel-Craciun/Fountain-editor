@@ -50,3 +50,27 @@ export const NozzleViewContainer = styled.div`
     justify-content: center;
     overflow-x: auto;
 `;
+
+export const TrackNameContainer = styled.div`
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 10px;
+`;
+
+export const TrackName = styled.span<{ ispump: boolean }>`
+    font-size: 1.3rem;
+    color: ${props => props.ispump ? "cyan" : "yellow"};
+`;
+
+export const NozzlesSavedContainer = styled.div`
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 10px;
+`;
+
+export const NozzlesUnsavedName = styled.span`
+    font-size: 1.3rem;
+    color: rgba(241, 71, 71, 1);
+`;
