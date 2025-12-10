@@ -350,6 +350,8 @@ export default class TimelineController {
     private pasteCopiedKeyframes() {
         let referenceVal = 0;
 
+        console.log(this.copiedKeyframeIds);
+
         for (let i = 0; i < this.copiedKeyframeIds.length; i++) {
             const kf = this.keyframes.find((k) => k.frameId === this.copiedKeyframeIds[i])!;
 
