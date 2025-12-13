@@ -1,10 +1,10 @@
 import { Timeline, TimelineClickEvent, TimelineElement, TimelineKeyframeChangedEvent, TimelineSelectedEvent, TimelineTimeChangedEvent } from "animation-timeline-js"
-import { listenToCustomEvent, TNozzleSelect } from "../events";
-import { Frame } from "../../model/model";
+import { listenToCustomEvent, TNozzleSelect, TProjectExport } from "../events";
+import { Frame, NozzleUnit } from "../../model/model";
 import { store } from "../store";
 import { setAreNozzlesSaved, setNozzles, setSelectedKeyframeIds, setSelectedNozzleIds, setSelectedRowID } from "../store/appState";
 import { v4 } from "uuid"
-import { ExtTimelineKeyframe, ExtTimelineModel, ExtTimelineRow, TPrevNextKeyframes } from "./types";
+import { ExtTimelineKeyframe, ExtTimelineModel, ExtTimelineRow, TPrevNextKeyframes, YamlKeyframeObject, YamlTimelineKeyframe } from "./types";
 import StoreController from "../store/StoreController";
 import yaml from "js-yaml";
 import { TimelineGroup } from "animation-timeline-js/lib/models/timelineGroup";
@@ -105,7 +105,8 @@ export default class TimelineController {
 
         listenToCustomEvent('invertSelKeyframesTrans', () => this.invertKeyframeTransition());
 
-        listenToCustomEvent('exportProject', () => this.exportYaml());
+        listenToCustomEvent('exportProject', (e) => this.exportYaml(e));
+        listenToCustomEvent('loadProject', (e) => this.loadYaml(e));
 
         
         this.timeline.onContextMenu((e) => {
@@ -283,6 +284,8 @@ export default class TimelineController {
     private playShow() {
         if (this.showPlayer != null) return;
 
+        this.setSelectedRowID(0);
+
         const timeStep = this.timeline.getOptions().snapStep ?? 100;
         this.timeline.setOptions({ timelineDraggable: false });
 
@@ -349,8 +352,6 @@ export default class TimelineController {
 
     private pasteCopiedKeyframes() {
         let referenceVal = 0;
-
-        console.log(this.copiedKeyframeIds);
 
         for (let i = 0; i < this.copiedKeyframeIds.length; i++) {
             const kf = this.keyframes.find((k) => k.frameId === this.copiedKeyframeIds[i])!;
@@ -657,9 +658,65 @@ export default class TimelineController {
         this.computeFrameInterpolation();
     }
 
-    /* yaml exporting */
-    private exportYaml() {
+
+    private keyframeToYamlObject(keyframe: ExtTimelineKeyframe): YamlKeyframeObject {
+        const ymlObject: YamlKeyframeObject = {
+            id: 0,
+            transition: keyframe.transition!,
+            values: {}
+        };
+
+        const nozzles = keyframe.frameValue!.getNozzles();
+
+        for (let i = 0; i < nozzles.length; i++) {
+            const nozzleName = nozzles[i].name;
+
+            ymlObject.values[nozzleName] = {
+                pump: undefined,
+                light: undefined
+            };
+
+            if (keyframe.rowId === 0) {
+                ymlObject.values[nozzleName].pump = nozzles[i].pumpHeight;
+            }
+
+            if (keyframe.rowId === 1) {
+                ymlObject.values[nozzleName].light = [nozzles[i].brightness, ...nozzles[i].rgb];
+            }
+        }
+
+        return ymlObject;
+    }
+
+    private buildFrameFromNozzleValues(nozzles: Array<NozzleUnit>, values: YamlKeyframeObject["values"]): Frame {
+        const frame = new Frame();
+        frame.setNozzles(nozzles);
+        
+        let clonedNozzles = frame.cloneNozzles();
+
+        for (let i = 0; i < clonedNozzles.length; i++) {
+            const nozzleName = clonedNozzles[i].name;
+            const value = values[nozzleName];
+
+            if (value?.pump !== undefined) {
+                clonedNozzles[i].pumpHeight = value.pump;
+            }
+
+            if (value?.light !== undefined) {
+                clonedNozzles[i].brightness = value.light[0];
+                clonedNozzles[i].rgb = [value.light[1], value.light[2], value.light[3]];
+            }
+        }
+
+        frame.setNozzles(clonedNozzles);
+        return frame;
+    }
+
+    /* yaml loading / exporting */
+    private exportYaml(projectExport: TProjectExport) {
         const { nozzles } = store.getState().appState;
+
+        this.sortKeyframes();
 
         /* inital object */
         const yamlObject: any = {
@@ -679,10 +736,128 @@ export default class TimelineController {
         }
 
         /* load the current keyframe data into the object */
-        
+        const keyframeSet = new Set<string>();
+        const idToSetIndexMap = new Map<string, number>();
 
+        /* create a unique set of keyframes */
+        for (let i = 0, j = 0; i < this.keyframes.length; i++) {
+            const ymlObject = this.keyframeToYamlObject(this.keyframes[i]);
+            const hashedObject = JSON.stringify(ymlObject);
+
+            if (keyframeSet.has(hashedObject)) {
+                idToSetIndexMap.set(this.keyframes[i].frameId!, [...keyframeSet].indexOf(hashedObject));
+                continue;
+            }
+
+            keyframeSet.add(hashedObject);
+            idToSetIndexMap.set(this.keyframes[i].frameId!, j++);
+        }
+
+        /* add the associated ids to each keyframe */
+        const uniqueKeyframes = [...keyframeSet];
+
+        for (let i = 0; i < uniqueKeyframes.length; i++) {
+            yamlObject.keyframes.push({
+                keyframe: {
+                    ...JSON.parse(uniqueKeyframes[i]),
+                    id: i
+                }
+            });
+        }
+
+        /* generate the timeline referencing the keyframes */
+        for (let i = 0; i < this.keyframes.length; i++) {
+            yamlObject.timeline.push({
+                keyframe: {
+                    id: idToSetIndexMap.get(this.keyframes[i].frameId!),
+                    time: this.keyframes[i].val,
+                    track: this.keyframes[i].rowId!
+                }
+            })
+        }
+        
+        /* convert the object into yaml */
         const yamlResult = yaml.dump(yamlObject);
 
-        console.log(yamlResult);
+        if (projectExport.copyToClipboard) {
+            navigator.clipboard.writeText(yamlResult);
+        }
+        else {
+            /* download the yaml result */
+            const blob = new Blob([yamlResult], { type: "text/yaml" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = projectExport.name + ".yaml";
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    private loadYaml(fileContents: string) {
+        const object = yaml.load(fileContents) as any;
+
+        this.keyframes = [];
+        this.setSelectedKeyframeIds([]);
+        this.timeline.setOptions({ snapStep: object.config.pulse_rate });
+
+        /* load the nozzles from the config section */
+        let loadedNozzles = [];
+
+        for (const [key, value] of Object.entries(object.config)) {
+            if (key === "pulse_rate") continue;
+
+            const nozzleName = key as string;
+            const nozzleValue = value as any;
+            const nozzle = new NozzleUnit(nozzleValue.name, nozzleName);
+            nozzle.calibration = nozzleValue.calibration;
+
+            loadedNozzles.push(nozzle);
+        }
+
+        /* load the keyframes into a map */
+        const keyframeMap = new Map<number, YamlKeyframeObject>();
+
+        const { keyframes } = object;
+
+        for (let i = 0; i < keyframes.length; i++) {
+            const keyframe = keyframes[i].keyframe as YamlKeyframeObject;
+
+            keyframeMap.set(keyframe.id, keyframe);
+        }
+
+        /* build the keyframes from the timeline object */
+        const { timeline } = object;
+
+        for (let i = 0; i < timeline.length; i++) {
+            const keyframe = timeline[i].keyframe as YamlTimelineKeyframe;
+            const referencedKeyframe = keyframeMap.get(keyframe.id)!;
+
+            const frameValue = this.buildFrameFromNozzleValues(loadedNozzles, referencedKeyframe.values);
+
+            this.keyframes.push({
+                frameId: v4(),
+                val: keyframe.time,
+                frameValue: frameValue,
+                rowId: keyframe.track,
+                selected: false,
+                transition: referencedKeyframe.transition,
+                group: this.keyframeGroup,
+                style: {
+                    fillColor: referencedKeyframe.transition ? "white" : "rgb(79, 218, 79)"
+                }
+            });
+        }
+
+        store.dispatch(setNozzles(loadedNozzles));
+
+        setTimeout(() => {
+            this.timelineTime = 0;
+            this.timeline.setTime(this.timelineTime);
+            this.setModel();
+            this.computeFrameInterpolation();
+        }, 0);
     }
 }

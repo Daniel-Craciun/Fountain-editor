@@ -4,6 +4,11 @@ export interface TNozzleSelect {
     overrideSelected: boolean;
 }
 
+export interface TProjectExport {
+    name: string;
+    copyToClipboard: boolean;
+}
+
 // events interface [message name : message content]
 interface IMessage {
     playShow: undefined;
@@ -29,7 +34,8 @@ interface IMessage {
 
     invertSelKeyframesTrans: undefined;
 
-    exportProject: undefined;
+    exportProject: TProjectExport;
+    loadProject: string;
 }
 
 export type EventKey = keyof IMessage;

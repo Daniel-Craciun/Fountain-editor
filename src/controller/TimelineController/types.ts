@@ -26,3 +26,20 @@ export interface TPrevNextKeyframes {
     prev: Array<ExtTimelineKeyframe | null>;
     next: Array<ExtTimelineKeyframe | null>;
 }
+
+export interface YamlKeyframeObject {
+    id: number;
+    transition: boolean;
+    values: {
+        [name: string]: {
+            pump: number | undefined;
+            light: Array<number> | undefined;
+        }
+    }
+}
+
+export interface YamlTimelineKeyframe {
+    id: number;
+    track: number;
+    time: number;
+}

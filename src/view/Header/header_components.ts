@@ -1,3 +1,4 @@
+import { TextField } from "@mui/material";
 import styled from "styled-components";
 
 export const HeaderContainer = styled.div`
@@ -11,7 +12,7 @@ export const HeaderContainer = styled.div`
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
 `;
 
 export const IconButton = styled.button`
@@ -27,5 +28,37 @@ export const IconButton = styled.button`
     &:hover {
         cursor: pointer;
         background-color: rgb(100,100,100);
+    }
+`;
+
+export const ProjectButtonContainer = styled.div`
+    margin-left: 10px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+`;
+
+export const StyledTextField = styled(TextField)`
+    & label {
+        color: white !important;
+    }
+
+    & input {
+        color: white !important;
+        font-size: 0.8rem !important;
+    }
+
+    & .MuiOutlinedInput-root {
+        & fieldset {
+            border-color: grey
+        }
+            
+        &:hover fieldset {
+            border-color: white
+        }
+
+        &.Mui-focused fieldset {
+            border-color: white
+        }
     }
 `;

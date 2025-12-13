@@ -1,80 +1,45 @@
-import { HeaderContainer, IconButton } from "./header_components";
+import { HeaderContainer, IconButton, ProjectButtonContainer, StyledTextField } from "./header_components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBackwardFast, faBackwardStep, faForwardFast, faForwardStep, faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
 import { dispatchCustomEvent } from "../../controller/events";
 import { useEffect, useState } from "react";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { keyboardEvents, loadProjectFile } from "./header_logic";
 import { createToast } from "../toast";
 
 export default function Header() {
     const [isPlaying, setIsPlaying] = useState(false);
-
-    function keyboardEvents(e: KeyboardEvent) {
-		// ignore any inputs into a text field
-		// @ts-ignore
-		if (e.target?.type === "text") return;
-
-		if (e.key === "k") {
-			e.preventDefault();
-
-			dispatchCustomEvent('saveCurrentKeyframe', e.ctrlKey || e.metaKey);
-			createToast("Keyframe saved.", 'success', 1000);
-		}
-        else if (e.key === "a") {
-            dispatchCustomEvent('selectAllNozzles');
-        }
-		else if (e.key === "c" && (e.ctrlKey || e.metaKey)) {
-			dispatchCustomEvent('copySelectedKeyframes');
-			createToast("Keyframe(s) copied.", 'success', 1000);
-		}
-		else if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
-			dispatchCustomEvent('pasteCopiedKeyframes');
-		}
-		else if (e.key === "Backspace" || e.key === "Delete") {
-			e.preventDefault();
-			dispatchCustomEvent('deleteSelectedKeyframes');
-		}
-        else if (e.key === "t") {
-            e.preventDefault();
-            dispatchCustomEvent('invertSelKeyframesTrans');
-        }
-		else if (e.key === "ArrowLeft") {
-			e.preventDefault();
-			dispatchCustomEvent('fineBackwardShow');
-		}
-		else if (e.key === "ArrowRight") {
-			e.preventDefault();
-			dispatchCustomEvent('fineForwardShow');
-		}
-        else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            dispatchCustomEvent('selectPrevRow');
-        }
-        else if (e.key === "ArrowDown") {
-            e.preventDefault();
-            dispatchCustomEvent('selectNextRow');
-        }
-        else if (e.code === "Space") {
-            e.preventDefault();
-            setIsPlaying((prev) => {
-                if (prev) {
-                    dispatchCustomEvent("pauseShow");
-                }
-                else {
-                    dispatchCustomEvent('playShow');
-                }
-
-                return !prev;
-            });
-        }
-	}
+    const [openDialog, setOpenDialog] = useState(false);
+    const [projectName, setProjectName] = useState("");
 
 	useEffect(() => {
-		window.addEventListener('keydown', keyboardEvents);
+		window.addEventListener('keydown', (e) => keyboardEvents(e, setIsPlaying));
 
-		return () => { window.removeEventListener('keydown', keyboardEvents) }
+		return () => { window.removeEventListener('keydown', (e) => keyboardEvents(e, setIsPlaying)) }
 	}, []);
+    
     return (
         <HeaderContainer>
+            <ProjectButtonContainer>
+                <Button
+                    sx={{
+                        textTransform: "none",
+                        color: "white",
+                        backgroundColor: 'rgb(80,80,80)',
+                        padding: '4px',
+                        fontSize: "0.8rem",
+                        borderRadius: "5px",
+                        "&:hover": {
+                            backgroundColor: 'rgb(100,100,100)'
+                        }
+                    }}
+                    onClick={() => loadProjectFile()}
+                >
+                    Load
+                </Button>
+            </ProjectButtonContainer>
+
+
             <div>
                 <IconButton onClick={() => dispatchCustomEvent('fastBackwardShow')}>
                     <FontAwesomeIcon icon={faBackwardFast} color="white" />
@@ -107,6 +72,94 @@ export default function Header() {
                     <FontAwesomeIcon icon={faForwardFast} color="white" />
                 </IconButton>
             </div>
+
+
+            <ProjectButtonContainer>
+                <Button
+                    sx={{
+                        textTransform: "none",
+                        color: "white",
+                        backgroundColor: 'rgb(80,80,80)',
+                        padding: '4px',
+                        fontSize: "0.8rem",
+                        borderRadius: "5px",
+                        "&:hover": {
+                            backgroundColor: 'rgb(100,100,100)'
+                        }
+                    }}
+                    onClick={() => setOpenDialog(true)}
+                >
+                    Save
+                </Button>
+            </ProjectButtonContainer>
+
+            <Dialog
+                open={openDialog}
+                onClose={() => setOpenDialog(false)}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            backgroundColor: "rgb(50,50,50)"
+                        }
+                    }
+                }}
+            >
+                <DialogTitle sx={{ color: "white", padding: '12px 12px' }}>Export Project</DialogTitle>
+
+                <DialogContent sx={{ padding: '10px 20px' }}>
+                    <StyledTextField
+                        size="small" 
+                        margin="normal" 
+                        variant="outlined" 
+                        placeholder="Project name"
+                        value={projectName}
+                        onChange={(e) => {
+                            setProjectName(e.target.value);
+                        }}
+                    />
+                </DialogContent>
+
+                <DialogActions>
+                    <Button
+                        sx={{
+                            textTransform: "none",
+                            color: "white",
+                            padding: '4px',
+                            fontSize: "1rem",
+                            borderRadius: "5px",
+                            "&:hover": {
+                                backgroundColor: 'rgb(70,70,70)'
+                            }
+                        }}
+                        onClick={() => {
+                            dispatchCustomEvent('exportProject', { name: projectName, copyToClipboard: true });
+                            setOpenDialog(false);
+                            createToast('Copied project to clipboard!', 'success', 2000);
+                        }}
+                    >
+                        Copy to clipboard
+                    </Button>
+
+                    <Button
+                        sx={{
+                            textTransform: "none",
+                            color: "white",
+                            padding: '4px',
+                            fontSize: "1rem",
+                            borderRadius: "5px",
+                            "&:hover": {
+                                backgroundColor: 'rgb(70,70,70)'
+                            }
+                        }}
+                        onClick={() => {
+                            dispatchCustomEvent('exportProject', { name: projectName, copyToClipboard: false });
+                            setOpenDialog(false);
+                        }}
+                    >
+                        Export
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </HeaderContainer>
     )
 }
