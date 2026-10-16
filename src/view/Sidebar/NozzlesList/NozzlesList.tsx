@@ -45,7 +45,7 @@ export default function NozzlesList() {
                             <StyledTextField 
                                 size="small" 
                                 margin="normal" 
-                                label="HA name" 
+                                label="Output ID" 
                                 variant="outlined" 
                                 defaultValue={nozzle.haName} 
                                 onBlur={(e) => {
